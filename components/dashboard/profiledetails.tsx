@@ -12,14 +12,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const Profiledetails = async () => {
-  const session = await auth(); 
+  const session = await auth();  
+  if(!session) return;
   return (
     <div className="ml-auto flex items-center gap-x-4">
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Avatar>
-            <AvatarImage src={session?.user.image} sizes="20" height={20} />
-            <AvatarFallback>{session?.user.name.charAt(0)}</AvatarFallback>
+        <DropdownMenuTrigger >
+          <Avatar className="cursor-pointer">
+            <AvatarImage src={session.user.image as string ?? " "} sizes="20" height={20} />
+            <AvatarFallback>{session.user.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </DropdownMenuTrigger>
         <DropdownMenuContent>

@@ -1,4 +1,3 @@
-
 import React, { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,8 +5,14 @@ import Logo from "@/public/logo.png";
 import Sidebarlinks from "@/components/dashboard/sidebarlinks";
 import MobileNavBar from "@/components/dashboard/mobilenavbar";
 import Profiledetails from "@/components/dashboard/profiledetails";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 
-const Dashboardlayout = ({ children }: { children: ReactNode }) => { 
+const Dashboardlayout = async ({ children }: { children: ReactNode }) => {
+  const session = await auth();
+  if (!session) {
+    redirect("/");
+  }
   return (
     <div className="min-h-screen w-full grid md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden md:block border-r bg-muted/40">
@@ -28,9 +33,12 @@ const Dashboardlayout = ({ children }: { children: ReactNode }) => {
       </div>
       <div className=" flex-col flex">
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-          <MobileNavBar />  
-          <Profiledetails/>
+          <MobileNavBar />
+          <Profiledetails />
         </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );
