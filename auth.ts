@@ -6,7 +6,7 @@ import authConfig from "./lib/auth.config"
 export const { handlers, signIn, signOut, auth } = NextAuth({  
  adapter: PrismaAdapter(prisma),
   pages: {
-    signIn: "/login",
+    signIn: "/",
   },
   events: {
     async linkAccount({ user }) {
