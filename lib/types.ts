@@ -15,9 +15,9 @@ export type onbooadingType = z.infer<typeof onboardingSchema>;
 export const settingsSchema = z.object({
   name: z.string().min(3).max(150),
   image: z.string(),
-}); 
+});
 
-export type settingType= z.infer<typeof settingsSchema>
+export type settingType = z.infer<typeof settingsSchema>;
 
 export const eventTypeSchema = z.object({
   title: z.string().min(3).max(150),
@@ -27,3 +27,4 @@ export const eventTypeSchema = z.object({
   videoCallSoftware: z.string().min(3),
 });
 
+export type eventType = z.infer<typeof eventTypeSchema>;
