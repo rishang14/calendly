@@ -40,7 +40,7 @@ const Onboardingform = () => {
         duration: 3000,
         description: "Congratulation you are onboarded",
       });
-      router.replace("/dashboard");
+      router.replace("/onboarding/grantid");
     } catch (error) {
     } finally {
       reset();
