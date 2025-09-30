@@ -19,8 +19,12 @@ import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eventTypeSchema, eventType } from "@/lib/types";
+import { createEvent } from "@/action/serveraction";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 const NewEventForm = () => {
+  const router = useRouter();
   const {
     handleSubmit,
     register,
@@ -33,7 +37,7 @@ const NewEventForm = () => {
     resolver: zodResolver(eventTypeSchema),
     defaultValues: {
       title: "",
-      duration: 0,
+      duration: 15,
       url: "",
       description: "",
       videoCallSoftware: "Google Meet",
@@ -41,17 +45,39 @@ const NewEventForm = () => {
   });
   const videoProvider = watch("videoCallSoftware");
   const onsubmit = async (datas: eventType) => {
-    console.log(datas, "value");
-    console.log(errors, "errors");
     try {
-    } catch (error) {}
+      const { data, error } = await createEvent(datas);
+      if (error) {
+        toast.error("Server Error", {
+          duration: 3000,
+          description: error.toString,
+        });
+      }
+
+      toast.success("Congratulation", {
+        duration: 3000,
+        description: "Event created Successfully",
+      });
+      router.replace("/dashboard");
+    } catch (error) {
+      toast.error("Exception", {
+        duration: 3000,
+        description: "Uncaughted error pls try again",
+      });
+    }finally{
+    reset()
+  }
   };
   return (
     <form onSubmit={handleSubmit(onsubmit)}>
       <CardContent className="grid gap-y-5">
         <div className="flex flex-col gap-y-2">
           <Label>Title</Label>
-          <Input {...register("title")} placeholder="30 Minute meeting" />
+          <Input
+            {...register("title")}
+            placeholder="30 Minute meeting"
+            disabled={isSubmitting}
+          />
           <p className="text-red-500 text-sm">{errors?.title?.message}</p>
         </div>
         <div className="flex flex-col gap-y-2">
@@ -61,6 +87,7 @@ const NewEventForm = () => {
               calendly.com/
             </span>
             <Input
+              disabled={isSubmitting}
               {...register("url")}
               className="rounded-l-none"
               placeholder="Example-url-1"
@@ -72,6 +99,7 @@ const NewEventForm = () => {
         <div className="flex flex-col gap-y-2">
           <Label>Description</Label>
           <Textarea
+            disabled={isSubmitting}
             {...register("description")}
             placeholder="Meet me in this meeting to meet me!"
           />
@@ -85,7 +113,8 @@ const NewEventForm = () => {
             name="duration"
             render={({ field }) => (
               <Select
-                onValueChange={field.onChange}
+                disabled={isSubmitting}
+                onValueChange={(val) => field.onChange(Number(val))}
                 value={field.value?.toString()}
               >
                 <SelectTrigger>
@@ -118,6 +147,7 @@ const NewEventForm = () => {
                 {["Zoom Meeting", "Google Meet", "Microsoft Teams"].map(
                   (provider) => (
                     <Button
+                      disabled={isSubmitting}
                       key={provider}
                       type="button"
                       onClick={() => field.onChange(provider)}
@@ -144,8 +174,9 @@ const NewEventForm = () => {
             Cancel
           </Link>
         </Button>
-        <Button type="submit" className="text-white">
-          Create Event Type
+
+        <Button type="submit" disabled={isSubmitting} className="text-white">
+          {isSubmitting ? "Create new Events" : "Create new events"}
         </Button>
       </CardFooter>
     </form>

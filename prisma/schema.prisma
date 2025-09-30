@@ -22,7 +22,7 @@ model User {
   accounts      Account[]
   sessions      Session[]  
   availability  Availability[] 
-  eventtype      EventType[]
+  eventType     EventType[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

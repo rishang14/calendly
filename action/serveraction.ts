@@ -1,9 +1,12 @@
 "use server";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
-import { onboardingSchema } from "@/lib/types";
+import { eventType, eventTypeSchema, onboardingSchema } from "@/lib/types";
 import { Prisma } from "@prisma/client";
+import { error } from "console";
 import { revalidatePath } from "next/cache";
+import z from "zod";
+import { da } from "zod/v4/locales";
 
 export const changeUserdetails = async (name: string, userName: string) => {
   const session = await auth();
@@ -79,8 +82,8 @@ export const changeUserdetails = async (name: string, userName: string) => {
 };
 
 export const handleAvailabilityAction = async (formdata: FormData) => {
-  const session = await auth(); 
-  if(!session?.user){
+  const session = await auth();
+  if (!session?.user) {
     return;
   }
   const rawData = Object.fromEntries(formdata.entries());
@@ -113,6 +116,35 @@ export const handleAvailabilityAction = async (formdata: FormData) => {
     );
     revalidatePath("/dashboard/availability");
   } catch (error) {
-    console.error("something went wrong while updating the list")
+    console.error("something went wrong while updating the list");
+  }
+};
+
+export const createEvent = async (values: eventType) => {
+  const session = await auth();
+  if (!session?.user.id) {
+    return { data: null, error: "Unauthorized request" };
+  }
+  try {
+    const validatedata = eventTypeSchema.safeParse(values);
+    if (!validatedata.success) {
+      return { data: null, error: z.treeifyError(validatedata.error) };
+    }
+    const { data } = validatedata;
+    const updateevent = await prisma.eventType.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        url: data.url,
+        duration: data.duration,
+        videoCallSoftware: data.videoCallSoftware, 
+        userId:session?.user.id
+      },
+    });
+      revalidatePath("/dashboard")
+    return { data: updateevent, error: null };
+  } catch (error) {
+    console.error("error while creating the event ");
+    return { data: null, error: "Internal server error " };
   }
 };
