@@ -7,11 +7,27 @@ import MobileNavBar from "@/components/dashboard/mobilenavbar";
 import Profiledetails from "@/components/dashboard/profiledetails";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
 
 const Dashboardlayout = async ({ children }: { children: ReactNode }) => {
   const session = await auth();
   if (!session) {
     redirect("/");
+  }
+
+  const getUserNameDetail = await prisma.user.findFirst({
+    where: { id: session?.user.id },
+    select: {
+      userName: true,
+      grantId: true,
+    },
+  }); 
+
+  if (!getUserNameDetail?.userName) {
+    return redirect("/onboarding");
+  }
+  if (!getUserNameDetail?.grantId) {
+    return redirect("/onboarding/grantId");
   }
   return (
     <div className="min-h-screen w-full grid md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">

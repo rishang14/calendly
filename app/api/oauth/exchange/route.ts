@@ -43,9 +43,9 @@ export async function GET(req: NextRequest) {
       },
     });   
 
-    return redirect("/dashboard");
   } catch (error) {
     console.error("Error exchanging code for token:", error);
-    return NextResponse.json({error:"Failed to exchange authorization code for token"},{status:500});
-  }   
+    // return NextResponse.json({error:"Failed to exchange authorization code for token"},{status:500});
+  }    
+  redirect("/dashboard");
 }
