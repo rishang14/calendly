@@ -32,13 +32,6 @@ export const SideBarItems:linkprops[]=[
     href: "/dashboard/availability",
     icon: CalendarCheck,
   },
-  {
-    id: 3,
-    name: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
-
 ]
 
 const Sidebarlinks = () => { 

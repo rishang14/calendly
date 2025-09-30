@@ -20,7 +20,9 @@ model User {
   grantId       String?
   grantEmail    String?
   accounts      Account[]
-  sessions      Session[] 
+  sessions      Session[]  
+  availability  Availability[] 
+  eventtype      EventType[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -64,3 +66,41 @@ model VerificationToken {
   @@id([identifier, token])
 }
  
+model Availability {
+  id String @id @default(uuid())
+
+  day      Day
+  fromTime String
+  tillTime String
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+}
+
+enum Day {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+  Sunday
+} 
+
+
+model EventType {
+  id                String  @id @default(uuid())
+  title             String
+  duration          Int
+  url               String
+  description       String
+  active            Boolean @default(true)
+  videoCallSoftware String  @default("Google Meet")
+
+  createdAt DateTime @default(now())
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+}

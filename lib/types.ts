@@ -1,3 +1,4 @@
+import { Exo } from "next/font/google";
 import { z } from "zod";
 
 export const onboardingSchema = z.object({
@@ -12,10 +13,11 @@ export const onboardingSchema = z.object({
 });
 export type onbooadingType = z.infer<typeof onboardingSchema>;
 export const settingsSchema = z.object({
-  fullName: z.string().min(3).max(150),
+  name: z.string().min(3).max(150),
+  image: z.string(),
+}); 
 
-  profileImage: z.string(),
-});
+export type settingType= z.infer<typeof settingsSchema>
 
 export const eventTypeSchema = z.object({
   title: z.string().min(3).max(150),
@@ -24,3 +26,4 @@ export const eventTypeSchema = z.object({
   description: z.string().min(3).max(300),
   videoCallSoftware: z.string().min(3),
 });
+

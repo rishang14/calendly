@@ -21,7 +21,7 @@ const Dashboardlayout = async ({ children }: { children: ReactNode }) => {
       userName: true,
       grantId: true,
     },
-  }); 
+  });
 
   if (!getUserNameDetail?.userName) {
     return redirect("/onboarding");

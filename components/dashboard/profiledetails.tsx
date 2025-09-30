@@ -10,10 +10,11 @@ import {
   DropdownMenuItem,
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
 
 const Profiledetails = async () => {
   const session = await auth();  
-  if(!session) return;
+  if(!session?.user) return;
   return (
     <div className="ml-auto flex items-center gap-x-4">
       <DropdownMenu>
@@ -27,9 +28,6 @@ const Profiledetails = async () => {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/dashboard/settings">Settings</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
             <form
               className="w-full"
               action={async () => {
@@ -37,7 +35,7 @@ const Profiledetails = async () => {
                 await signOut();
               }}
             >
-              <button className="w-full text-left">Log out</button>
+              <Button variant={"link"} className="w-full text-left text-white">Log out</Button>
             </form>
           </DropdownMenuItem>
         </DropdownMenuContent>
