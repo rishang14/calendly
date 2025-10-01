@@ -1,111 +1,167 @@
-import { auth } from "@/auth";
+import { RenderCalendar } from "@/components/bookingform/rendercalender";
+import { TimeTable } from "@/components/bookingform/timetable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import prisma from "@/lib/prisma";
 import { CalendarX2, Clock, VideoIcon } from "lucide-react";
-import { notFound, redirect } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { notFound } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreateMeetingAction, getBookingdetails } from "@/action/serveraction";
 
-type Params = {
-  username: string;
-  eventUrl: string;
-};
+// @ts-ignore
+const Booking = async ({ params, searchParams }) => {
 
-const Booking = async ({ params }: { params: Promise<Params> }) => {
-  const session = await auth();
-  if (!session?.user) {
-    return redirect("/");
-  }
   const { username, eventUrl } = await params;
 
-  const data = await prisma.eventType.findFirst({
-    where: {
-      url: eventUrl,
-      User: {
-        userName: username,
-      },
-    },
-    select: {
-      id: true,
-      description: true,
-      title: true,
-      duration: true,
-      videoCallSoftware: true,
-      User: {
-        select: {
-          image: true,
-          name: true,
-          availability: {
-            select: {
-              day: true,
-              isActive: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
+  const data = await getBookingdetails(username,eventUrl);
   if (!data) {
     return notFound();
   }
-  console.log(data, "datas");
+  const { date, time } = await searchParams;
+  const selectedDate = date ? new Date(date) : new Date();
+
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(selectedDate);
+
+  const showForm = !!date && !!time; 
   return (
     <div className="min-h-screen w-screen flex items-center justify-center">
-      <Card className="w-full max-w-[1000px] mx-auto">
-        <CardContent className="p-5 md:grid md:grid-cols-[1fr,auto,1fr,auto,1fr] gap-4">
-          <div>
-            <img
-              src={data.User?.image as string}
-              alt="Profile Image of user"
-              className="size-10 rounded-full"
-            />
-            <p className="text-sm font-medium text-muted-foreground mt-1">
-              {data.User?.name}
-            </p>
-            <h1 className="text-xl font-semibold mt-2">{data.title}</h1>
-            <p className="text-sm font-medium text-muted-foreground">
-              {data.description}
-            </p>
-
-            <div className="mt-5 flex flex-col gap-y-3">
-              <p className="flex items-center">
-                <CalendarX2 className="size-4 mr-2 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">
-                  {/* {formattedDate} */}
-                </span>
+      {showForm ? (
+        <Card className="max-w-[600px] w-full">
+          <CardContent className="p-5 md:grid md:grid-cols-[1fr_auto_1fr] gap-4">
+            <div>
+              <Avatar>
+                <AvatarImage src={data.User?.image ?? ""} alt="userimg" />
+                <AvatarFallback>{data.User?.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <p className="text-sm font-medium text-muted-foreground mt-1">
+                {data.User?.name}
+              </p>
+              <h1 className="text-xl font-semibold mt-2">{data.title}</h1>
+              <p className="text-sm font-medium text-muted-foreground">
+                {data.description}
               </p>
 
-              <p className="flex items-center">
-                <Clock className="size-4 mr-2 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">
-                  {data.duration} Minutes
-                </span>
-              </p>
+              <div className="mt-5 flex flex-col gap-y-3">
+                <p className="flex items-center">
+                  <CalendarX2 className="size-4 mr-2 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {formattedDate}
+                  </span>
+                </p>
 
-              <p className="flex items-center">
-                <VideoIcon className="size-4 mr-2 text-primary" />
-                <span className="text-sm font-medium text-muted-foreground">
-                  {data.videoCallSoftware}
-                </span>
-              </p>
+                <p className="flex items-center">
+                  <Clock className="size-4 mr-2 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {data.duration} Minutes
+                  </span>
+                </p>
+
+                <p className="flex items-center">
+                  <VideoIcon className="size-4 mr-2 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {data.videoCallSoftware}
+                  </span>
+                </p>
+              </div>
             </div>
-          </div>
 
-          <Separator orientation="vertical" className="h-full w-[5px]" />
+            <Separator orientation="vertical" className="h-full w-[1px]" />
 
-          {/* <RenderCalendar availability={data.User?.availability as any} /> */} 
-          <div>helo</div>
+            <form
+              className="flex flex-col gap-y-4"
+              action={CreateMeetingAction}
+            >
+              <input type="hidden" name="fromTime" value={time} />
+              <input
+                type="hidden"
+                name="eventDate"
+                value={date}
+              />
 
-          <Separator orientation="vertical" className="h-full w-[5px] border-gray-300" />
+              <input type="hidden" name="meetingLength" value={data.duration} />
+              <input
+                type="hidden"
+                name="provider"
+                value={data.videoCallSoftware}
+              />
 
-          {/* <TimeTable
+              <input type="hidden" name="username" value={username} />
+
+              <input type="hidden" name="eventTypeId" value={data.id} />
+              <div className="flex flex-col gap-y-2">
+                <Label>Your Name</Label>
+                <Input name="name" placeholder="Your Name" />
+              </div>
+              <div className="flex flex-col gap-y-2">
+                <Label>Your Email</Label>
+                <Input name="email" placeholder="johndoe@example.com" />
+              </div>
+              <Button type="submit" className="w-full mt-5 text-white">
+                Book Meeting
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="w-full max-w-[1000px] mx-auto">
+          <CardContent className="p-5 md:grid grid-cols-[1fr_auto_1fr_auto_1fr] gap-4">
+            <div>
+               <Avatar>
+                <AvatarImage src={data.User?.image ?? ""} alt="userimg" />
+                <AvatarFallback>{data.User?.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <p className="text-sm font-medium text-muted-foreground mt-1">
+                {data.User?.name}
+              </p>
+              <h1 className="text-xl font-semibold mt-2">{data.title}</h1>
+              <p className="text-sm font-medium text-muted-foreground">
+                {data.description}
+              </p>
+
+              <div className="mt-5 flex flex-col gap-y-3">
+                <p className="flex items-center">
+                  <CalendarX2 className="size-4 mr-2 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {formattedDate}
+                  </span>
+                </p>
+
+                <p className="flex items-center">
+                  <Clock className="size-4 mr-2 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {data.duration} Minutes
+                  </span>
+                </p>
+
+                <p className="flex items-center">
+                  <VideoIcon className="size-4 mr-2 text-primary" />
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {data.videoCallSoftware}
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <Separator orientation="vertical" className="h-full w-[1px]" />
+
+            <RenderCalendar availability={data.User?.availability as any} />
+
+            <Separator orientation="vertical" className="h-full w-[1px]" />
+
+            <TimeTable
               duration={data.duration}
               selectedDate={selectedDate}
-              userName={params.username}
-            /> */} 
-            <div>hello</div>
-        </CardContent>
-      </Card>
+              userName={username}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
