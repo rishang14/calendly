@@ -2,11 +2,9 @@
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { eventType, eventTypeSchema, onboardingSchema } from "@/lib/types";
-import { Prisma } from "@prisma/client";
-import { error } from "console";
+import { EventType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import z from "zod";
-import { da } from "zod/v4/locales";
+import z, { success } from "zod";
 
 export const changeUserdetails = async (name: string, userName: string) => {
   const session = await auth();
@@ -137,14 +135,44 @@ export const createEvent = async (values: eventType) => {
         description: data.description,
         url: data.url,
         duration: data.duration,
-        videoCallSoftware: data.videoCallSoftware, 
-        userId:session?.user.id
+        videoCallSoftware: data.videoCallSoftware,
+        userId: session?.user.id
       },
     });
-      revalidatePath("/dashboard")
+    revalidatePath("/dashboard")
     return { data: updateevent, error: null };
   } catch (error) {
     console.error("error while creating the event ");
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        // Unique constraint failed
+        return { data: null, error: "Url is already takne" };
+      }
+    }
     return { data: null, error: "Internal server error " };
   }
 };
+
+
+export const updateEventAction = async (values: Partial<EventType>, id: string) => {
+  const session = await auth();
+  if (!session?.user) {
+    return { success: false, error: "Unauthenticated request" };
+  }
+
+  try {
+    const update = await prisma.eventType.update({
+      where: {
+        id
+      },
+      data: {
+        ...values,
+      }
+    })
+    revalidatePath("/dashboard")
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("something went wrong while updating the event ");
+    return { success: false, error: "Internal sever error" };
+  }
+}

@@ -14,7 +14,9 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Settings,ExternalLink ,Users2,Trash,Pen} from "lucide-react";
+import { Settings, ExternalLink, Users2, Trash, Pen } from "lucide-react";
+import { CopyLinkMenuItem } from "@/components/dashboard/copylinkmenu";
+import { MenuActiveSwitch } from "@/components/dashboard/eventmenu";
 const Dashboard = async () => {
   const session = await auth();
   if (!session?.user) {
@@ -63,7 +65,9 @@ const Dashboard = async () => {
               </p>
             </div>
             <Button asChild>
-              <Link href="/dashboard/new">Create New Event</Link>
+              <Link href="/dashboard/new" className="text-white">
+                Create New Event
+              </Link>
             </Button>
           </div>
 
@@ -90,9 +94,9 @@ const Dashboard = async () => {
                             Preview
                           </Link>
                         </DropdownMenuItem>
-                        {/* <CopyLinkMenuItem
+                        <CopyLinkMenuItem
                           meetingUrl={`${process.env.NEXT_PUBLIC_URL}/${data.userName}/${item.url}`}
-                        /> */}
+                        />
                         <DropdownMenuItem asChild>
                           <Link href={`/dashboard/event/${item.id}`}>
                             <Pen className="size-4 mr-2" /> Edit
@@ -125,13 +129,18 @@ const Dashboard = async () => {
                   </div>
                 </Link>
                 <div className="bg-muted px-5 py-3 justify-between items-center flex">
-                  {/* <MenuActiveSwitch
+                  <MenuActiveSwitch
                     initalChecked={item.active}
                     eventTypeId={item.id}
-                  /> */}
+                  />
 
                   <Button asChild>
-                    <Link href={`/dashboard/event/${item.id}`} className="text-white">Edit Event</Link>
+                    <Link
+                      href={`/dashboard/event/${item.id}`}
+                      className="text-white"
+                    >
+                      Edit Event
+                    </Link>
                   </Button>
                 </div>
               </div>
