@@ -310,5 +310,31 @@ export const getEventsDetails = async () => {
 
 
 export const cancelMeetingAction=async(val:FormData)=>{
+const session=await auth(); 
+if(!session?.user.id){
+  return; 
+} 
 
+const getuserDeatils= await prisma.user.findUnique({
+  where:{
+    id:session?.user.id as string
+  },select:{
+    grantEmail:true,
+    grantId:true
+  }
+})
+  
+if(!getuserDeatils){
+  throw new Error("User not found")
+}
+  await nylas.events.destroy({
+    eventId:val.get("eventId") as string,
+    identifier:getuserDeatils.grantId as string, 
+    queryParams:{
+      calendarId:getuserDeatils.grantEmail as string
+    }
+  })   
+
+
+  revalidatePath("/dashboard/meetings");
 }
