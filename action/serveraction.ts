@@ -177,7 +177,12 @@ export const updateEventAction = async (
     revalidatePath("/dashboard");
     return { success: true, error: null };
   } catch (error) {
-    console.error("something went wrong while updating the event ");
+    console.error("something went wrong while updating the event "); 
+     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return { success:false, error: "Url is already takne" };
+      }
+    }
     return { success: false, error: "Internal sever error" };
   }
 };
