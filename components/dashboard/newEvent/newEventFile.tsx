@@ -144,7 +144,7 @@ const NewEventForm = () => {
             name="videoCallSoftware"
             render={({ field }) => (
               <ButtonGroup>
-                {["Zoom Meeting", "Google Meet", "Microsoft Teams"].map(
+                {["Google Meet"].map(
                   (provider) => (
                     <Button
                       disabled={isSubmitting}

@@ -1,10 +1,13 @@
 "use server";
 import { auth } from "@/auth";
+import { nylas } from "@/lib/nylas";
 import prisma from "@/lib/prisma";
 import { eventType, eventTypeSchema, onboardingSchema } from "@/lib/types";
 import { EventType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import z, { success } from "zod";
+import { redirect } from "next/navigation";
+import z from "zod";
+import { tr } from "zod/v4/locales";
 
 export const changeUserdetails = async (name: string, userName: string) => {
   const session = await auth();
@@ -79,12 +82,12 @@ export const changeUserdetails = async (name: string, userName: string) => {
   }
 };
 
-export const handleAvailabilityAction = async (formdata: FormData) => {
+export const handleAvailabilityAction = async (values: FormData) => {
   const session = await auth();
   if (!session?.user) {
     return;
   }
-  const rawData = Object.fromEntries(formdata.entries());
+  const rawData = Object.fromEntries(values.entries());
   const availabilityData = Object.keys(rawData)
     .filter((keys) => keys.startsWith("id-"))
     .map((item) => {
@@ -136,10 +139,10 @@ export const createEvent = async (values: eventType) => {
         url: data.url,
         duration: data.duration,
         videoCallSoftware: data.videoCallSoftware,
-        userId: session?.user.id
+        userId: session?.user.id,
       },
     });
-    revalidatePath("/dashboard")
+    revalidatePath("/dashboard");
     return { data: updateevent, error: null };
   } catch (error) {
     console.error("error while creating the event ");
@@ -153,8 +156,10 @@ export const createEvent = async (values: eventType) => {
   }
 };
 
-
-export const updateEventAction = async (values: Partial<EventType>, id: string) => {
+export const updateEventAction = async (
+  values: Partial<EventType>,
+  id: string
+) => {
   const session = await auth();
   if (!session?.user) {
     return { success: false, error: "Unauthenticated request" };
@@ -163,16 +168,147 @@ export const updateEventAction = async (values: Partial<EventType>, id: string) 
   try {
     const update = await prisma.eventType.update({
       where: {
-        id
+        id,
       },
       data: {
         ...values,
-      }
-    })
-    revalidatePath("/dashboard")
+      },
+    });
+    revalidatePath("/dashboard");
     return { success: true, error: null };
   } catch (error) {
     console.error("something went wrong while updating the event ");
     return { success: false, error: "Internal sever error" };
   }
+};
+
+export const getBookingdetails = async (userName: string, eventUrl: string) => {
+  return prisma.eventType.findFirst({
+    where: {
+      url: eventUrl,
+      User: {
+        userName: userName,
+      },
+    },
+    select: {
+      id: true,
+      description: true,
+      title: true,
+      duration: true,
+      videoCallSoftware: true,
+      User: {
+        select: {
+          image: true,
+          name: true,
+          availability: {
+            select: {
+              day: true,
+              isActive: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};
+
+export const CreateMeetingAction = async (formData: FormData) =>{
+  const getUserData = await prisma.user.findUnique({
+    where: {
+      userName: formData.get("username") as string,
+    },
+    select: {
+      grantEmail: true,
+      grantId: true,
+    },
+  });
+
+  if (!getUserData) {
+    throw new Error("User not Found");
+  }
+
+  const eventTypeData = await prisma.eventType.findUnique({
+    where: {
+      id: formData.get("eventTypeId") as string,
+    },
+    select: {
+      title: true,
+      description: true,
+    },
+  });
+
+  const fromTime = formData.get("fromTime") as string;
+  const eventDate = formData.get("eventDate") as string;
+  const meetingLength = Number(formData.get("meetingLength"));
+  const provider = formData.get("provider") as string;
+
+  const startDateTime = new Date(`${eventDate}T${fromTime}:00`);
+
+  const endDateTime = new Date(startDateTime.getTime() + meetingLength * 60000);
+  console.log(getUserData,"data")
+  await nylas.events.create({
+    identifier: getUserData.grantId as string,
+    requestBody: {
+      title: eventTypeData?.title,
+      description: eventTypeData?.description,
+      when: {
+        startTime: Math.floor(startDateTime.getTime() / 1000),
+        endTime: Math.floor(endDateTime.getTime() / 1000),
+      },
+      conferencing: {
+        autocreate: {},
+        provider: provider as any,
+      },
+      participants: [
+        {
+          name: formData.get("name") as string,
+          email: formData.get("email") as string,
+          status: "yes",
+        },
+      ],
+    },
+    queryParams: {
+      calendarId: getUserData.grantEmail as string,
+      notifyParticipants: true,
+    },
+  });  
+
+  console.log("hello")
+
+  return redirect("/success");
+}
+
+export const getEventsDetails = async () => {
+  const session = await auth();
+  if (!session?.user.id) {
+    return redirect("/");
+  }
+
+  const getUserDeatils = await prisma.user.findUnique({
+    where: {
+      id: session?.user.id,
+    },
+    select: {
+      grantEmail: true,
+      grantId: true,
+    },
+  });
+
+  if (!getUserDeatils) {
+    throw new Error("User Node found");
+  }
+
+  const data = await nylas.events.list({
+    identifier: getUserDeatils.grantId as string,
+    queryParams: {
+      calendarId: getUserDeatils.grantEmail as string,
+    },
+  });
+
+  return data;
+};
+
+
+export const cancelMeetingAction=async(val:FormData)=>{
+
 }
