@@ -1,9 +1,21 @@
-import React from 'react'
+import { geteventvalues } from "@/action/serveraction";
+import { EditEventForm } from "@/components/dashboard/newEvent/editevent"; 
 
-const EventManagePage = () => {
+
+export default async function EditRoute({
+  params,
+}: {
+  params:Promise<{ eventId: string }>
+}) { 
+  const {eventId}=await params;
+  const data = await geteventvalues(eventId);
   return (
-    <div>EventManagePage</div>
-  )
+    <EditEventForm
+      description={data.description}
+      duration={data.duration}
+      id={data.id}
+      title={data.title}
+      url={data.url}
+    />
+  );
 }
-
-export default EventManagePage

@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { eventType, eventTypeSchema, onboardingSchema } from "@/lib/types";
 import { EventType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import z from "zod";
 import { tr } from "zod/v4/locales";
 
@@ -334,7 +334,32 @@ if(!getuserDeatils){
       calendarId:getuserDeatils.grantEmail as string
     }
   })   
-
-
   revalidatePath("/dashboard/meetings");
-}
+}  
+
+
+export const geteventvalues=async(eventTypeId:string)=>{
+  const session=await auth(); 
+  if(!session?.user.id){
+    return redirect("/"); 
+  } 
+  const data=  await prisma.eventType.findUnique({
+      where: {
+        id: eventTypeId,
+      },
+      select: {
+        title: true,
+        description: true,
+        duration: true,
+        url: true,
+        id: true,
+        videoCallSoftware: true,
+      },
+    });
+  
+    if (!data) {
+      return notFound();
+    }
+  
+    return data;
+  }
